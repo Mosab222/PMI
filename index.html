@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMI System — Preventive Maintenance Inspection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="data.js"></script>
+<style>
+:root {
+  --bg:     #f5f7fa;
+  --bg2:    #ffffff;
+  --bg3:    #eef1f6;
+  --border: #dde2ea;
+  --border2:#c8d0dc;
+  --accent: #0a7ea4;
+  --accent2:#0d6e8a;
+  --accent3:#e05c2a;
+  --accentL:#e8f5fa;
+  --text:   #1a2130;
+  --text2:  #4a5568;
+  --text3:  #8896a8;
+  --success:#0f9e6a;
+  --successL:#e6f7f1;
+  --radius: 14px;
+  --shadow: 0 4px 20px rgba(10,60,100,0.10);
+  --shadow2:0 2px 8px rgba(10,60,100,0.07);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body[dir="rtl"] { font-family: 'Cairo', sans-serif; }
+body[lang="ur"]  { font-family: 'Cairo', sans-serif; }
+
+/* subtle top stripe */
+body::before {
+  content:'';
+  display:block;
+  height:4px;
+  background: linear-gradient(90deg, var(--accent), #38bdf8, var(--accent));
+}
+
+.container { max-width:860px; margin:0 auto; padding:28px 18px 80px; }
+
+/* ── Header ── */
+.header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:32px; flex-wrap:wrap; gap:14px;
+}
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-icon {
+  width:46px; height:46px;
+  background: linear-gradient(135deg, var(--accent), #38bdf8);
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px;
+  box-shadow: 0 4px 14px rgba(10,126,164,0.30);
+}
+.logo-text h1 {
+  font-size:19px; font-weight:700; color:var(--accent);
+  letter-spacing:-.4px;
+}
+.logo-text p { font-size:11px; color:var(--text3); letter-spacing:1.4px; text-transform:uppercase; margin-top:2px; }
+
+/* Lang switcher */
+.lang-switcher {
+  display:flex; gap:5px;
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:50px; padding:4px;
+  box-shadow:var(--shadow2);
+}
+.lang-btn {
+  padding:6px 14px; border-radius:50px; border:none;
+  background:transparent; color:var(--text2);
+  font-size:12px; cursor:pointer; transition:all .2s;
+  font-family:inherit; font-weight:600;
+}
+.lang-btn.active { background:var(--accent); color:#fff; }
+.lang-btn:hover:not(.active) { background:var(--bg3); color:var(--text); }
+
+/* ── Card ── */
+.card {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px 26px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow2);
+}
+
+.card-label {
+  font-size:10px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--accent); margin-bottom:14px;
+  display:flex; align-items:center; gap:8px;
+}
+.card-label::before {
+  content:''; display:inline-block;
+  width:3px; height:14px; border-radius:2px;
+  background:var(--accent);
+}
+
+/* Input */
+.input-group label { display:block; font-size:12px; color:var(--text2); margin-bottom:7px; font-weight:600; }
+.input-field {
+  width:100%; background:var(--bg3); border:1.5px solid var(--border);
+  border-radius:9px; color:var(--text); padding:11px 15px;
+  font-family:'DM Mono', monospace; font-size:14px;
+  transition:all .2s; outline:none;
+}
+.input-field:focus { border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(10,126,164,0.12); }
+.input-field::placeholder { color:var(--text3); }
+
+/* Search */
+.search-wrapper { position:relative; }
+.search-input {
+  width:100%; background:var(--bg3); border:1.5px solid var(--border);
+  border-radius:9px; color:var(--text); padding:13px 15px 13px 44px;
+  font-family:'DM Mono', monospace; font-size:14px; font-weight:500;
+  transition:all .2s; outline:none; letter-spacing:.5px;
+}
+.search-input:focus { border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(10,126,164,0.12); }
+.search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:17px; color:var(--text3); pointer-events:none; }
+[dir="rtl"] .search-icon { left:auto; right:14px; }
+[dir="rtl"] .search-input { padding:13px 44px 13px 15px; }
+
+/* Dropdown */
+.dropdown {
+  position:absolute; top:calc(100% + 6px); left:0; right:0;
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:11px; overflow:hidden;
+  box-shadow:0 8px 28px rgba(10,60,100,0.14); z-index:200;
+  max-height:270px; overflow-y:auto;
+  animation:dropIn .14s ease;
+}
+@keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+.dropdown-item {
+  display:flex; align-items:center; gap:13px;
+  padding:11px 15px; cursor:pointer; transition:background .12s;
+  border-bottom:1px solid var(--bg3);
+}
+.dropdown-item:last-child { border-bottom:none; }
+.dropdown-item:hover { background:var(--accentL); }
+
+.item-code {
+  font-family:'DM Mono',monospace; font-size:12px; font-weight:600;
+  color:var(--accent); background:var(--accentL);
+  padding:4px 10px; border-radius:6px;
+  white-space:nowrap; min-width:68px; text-align:center;
+}
+.item-name { font-size:12.5px; color:var(--text2); flex:1; line-height:1.4; }
+
+/* Selected badge */
+.eq-badge {
+  display:flex; align-items:center; gap:12px;
+  background:var(--accentL); border:1.5px solid rgba(10,126,164,0.25);
+  border-radius:10px; padding:13px 16px; margin-top:12px;
+}
+.eq-badge-code { font-family:'DM Mono',monospace; font-weight:700; color:var(--accent); font-size:15px; }
+.eq-badge-name { font-size:12.5px; color:var(--text2); flex:1; }
+.eq-clear { background:none; border:none; color:var(--text3); cursor:pointer; font-size:17px; padding:2px 6px; border-radius:4px; transition:color .2s; }
+.eq-clear:hover { color:var(--accent3); }
+
+/* Freq buttons */
+.freq-grid { display:flex; flex-wrap:wrap; gap:8px; }
+.freq-btn {
+  padding:8px 16px; border-radius:8px;
+  border:1.5px solid var(--border); background:var(--bg3);
+  color:var(--text2); font-family:inherit; font-size:12px;
+  cursor:pointer; transition:all .2s; font-weight:600;
+}
+.freq-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accentL); }
+.freq-btn.active { border-color:var(--accent); background:var(--accent); color:#fff; }
+
+/* Checklist */
+.checklist-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+.checklist-title { font-size:13.5px; font-weight:700; color:var(--text); margin-top:2px; }
+.checklist-meta { font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; white-space:nowrap; margin-top:4px; }
+
+.check-progress { height:5px; background:var(--bg3); border-radius:3px; margin-bottom:18px; overflow:hidden; }
+.check-progress-bar { height:100%; background:linear-gradient(90deg,var(--accent),#38bdf8); border-radius:3px; transition:width .4s ease; }
+
+/* Stats */
+.stats-bar {
+  display:flex; gap:0; margin-bottom:16px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:11px; overflow:hidden;
+}
+.stat { text-align:center; flex:1; padding:12px 8px; border-right:1px solid var(--border); }
+.stat:last-child { border-right:none; }
+.stat-val { font-family:'DM Mono',monospace; font-size:20px; font-weight:600; color:var(--accent); }
+.stat-lbl { font-size:9.5px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+/* Task items */
+.task-item {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px 14px; border-radius:9px;
+  border:1.5px solid var(--border);
+  margin-bottom:7px; cursor:pointer;
+  transition:all .18s; background:var(--bg2);
+  user-select:none;
+}
+.task-item:hover { border-color:var(--accent); background:var(--accentL); }
+.task-item.checked { border-color:rgba(15,158,106,0.35); background:var(--successL); }
+
+.task-checkbox {
+  width:20px; height:20px; min-width:20px;
+  border-radius:6px; border:2px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  transition:all .18s; margin-top:1px; background:var(--bg3);
+}
+.task-item.checked .task-checkbox { border-color:var(--success); background:var(--success); }
+.task-checkbox::after { content:'✓'; font-size:12px; font-weight:800; color:#fff; opacity:0; transform:scale(.4); transition:all .15s; }
+.task-item.checked .task-checkbox::after { opacity:1; transform:scale(1); }
+
+.task-num { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3); min-width:26px; margin-top:2px; }
+.task-text { font-size:13px; color:var(--text2); line-height:1.6; flex:1; }
+.task-item.checked .task-text { color:var(--text3); text-decoration:line-through; }
+
+/* Image upload */
+.img-upload-area {
+  border:2px dashed var(--border2); border-radius:11px;
+  padding:22px; text-align:center; cursor:pointer;
+  transition:all .2s; background:var(--bg3);
+}
+.img-upload-area:hover,.img-upload-area.drag-over { border-color:var(--accent); background:var(--accentL); }
+.img-upload-icon { font-size:26px; margin-bottom:7px; }
+.img-upload-text { font-size:13px; color:var(--text2); font-weight:500; }
+.img-upload-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+.img-count { font-size:11px; color:var(--accent); margin-top:5px; font-family:'DM Mono',monospace; font-weight:600; }
+
+.img-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:9px; margin-top:13px; }
+.img-thumb { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; border:1.5px solid var(--border); }
+.img-thumb img { width:100%; height:100%; object-fit:cover; }
+.img-thumb-del {
+  position:absolute; top:4px; right:4px;
+  background:rgba(255,255,255,0.85); border:none; color:var(--accent3);
+  width:22px; height:22px; border-radius:50%; cursor:pointer;
+  font-size:12px; display:flex; align-items:center; justify-content:center;
+  transition:all .2s; font-weight:700;
+}
+.img-thumb-del:hover { background:var(--accent3); color:#fff; }
+
+/* Buttons */
+.actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:22px; }
+.btn {
+  display:flex; align-items:center; gap:8px;
+  padding:12px 22px; border-radius:10px; border:none;
+  font-family:inherit; font-size:13px; font-weight:700;
+  cursor:pointer; transition:all .2s;
+}
+.btn-primary { background:linear-gradient(135deg,var(--accent),#0d8fbf); color:#fff; box-shadow:0 4px 14px rgba(10,126,164,0.25); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(10,126,164,0.35); }
+.btn-share { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; box-shadow:0 4px 14px rgba(18,140,126,0.25); }
+.btn-share:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(18,140,126,0.35); }
+.btn-secondary { background:var(--bg3); border:1.5px solid var(--border); color:var(--text2); }
+.btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+.btn:disabled { opacity:.45; cursor:not-allowed; transform:none!important; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(100px);
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:11px; padding:11px 20px; font-size:13px; font-weight:500;
+  box-shadow:0 8px 28px rgba(10,60,100,0.15); z-index:9999; transition:transform .3s ease;
+  display:flex; align-items:center; gap:8px; color:var(--text);
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:var(--success); }
+.toast.error { border-color:var(--accent3); }
+
+.hidden { display:none!important; }
+.section { margin-bottom:16px; }
+
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--text3); }
+
+@media(max-width:600px){
+  .header{flex-direction:column;align-items:flex-start;}
+  .stat-val{font-size:17px;}
+  .actions{flex-direction:column;}
+  .btn{justify-content:center;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🔧</div>
+      <div class="logo-text">
+        <h1 data-t="appTitle">PMI System</h1>
+        <p data-t="appSub">Preventive Maintenance Inspection</p>
+      </div>
+    </div>
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('ar')">ع</button>
+      <button class="lang-btn" onclick="setLang('ur')">اردو</button>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card section">
+    <div class="card-label" data-t="step1">Step 1 — Work Order</div>
+    <div class="input-group">
+      <label data-t="woLabel">Work Order Number</label>
+      <input type="text" id="woInput" class="input-field" placeholder="e.g. WO-2024-001" />
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card section">
+    <div class="card-label" data-t="step2">Step 2 — Equipment Code</div>
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="codeSearch" class="search-input" placeholder="Type code or name..." autocomplete="off" />
+      <div class="dropdown hidden" id="dropdown"></div>
+    </div>
+    <div class="eq-badge hidden" id="eqBadge">
+      <span class="eq-badge-code" id="badgeCode"></span>
+      <span class="eq-badge-name" id="badgeName"></span>
+      <button class="eq-clear" onclick="clearSelection()">✕</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card section hidden" id="freqCard">
+    <div class="card-label" data-t="step3">Step 3 — Frequency</div>
+    <div class="freq-grid" id="freqGrid"></div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="card section hidden" id="checklistCard">
+    <div class="checklist-header">
+      <div>
+        <div class="card-label" data-t="step4">Step 4 — Checklist</div>
+        <div class="checklist-title" id="checklistTitle"></div>
+      </div>
+      <div class="checklist-meta" id="checklistMeta"></div>
+    </div>
+    <div class="check-progress"><div class="check-progress-bar" id="progressBar" style="width:0%"></div></div>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl" data-t="statTotal">Total</div></div>
+      <div class="stat"><div class="stat-val" id="statDone" style="color:var(--success)">0</div><div class="stat-lbl" data-t="statDone">Completed</div></div>
+      <div class="stat"><div class="stat-val" id="statLeft" style="color:var(--text3)">0</div><div class="stat-lbl" data-t="statLeft">Remaining</div></div>
+    </div>
+    <div id="taskList"></div>
+    <div style="margin-top:10px;text-align:right;">
+      <button class="btn btn-secondary" onclick="toggleAll()" id="toggleAllBtn" style="padding:8px 14px;font-size:12px;" data-t="checkAll">Check All</button>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="card section hidden" id="photoCard">
+    <div class="card-label" data-t="step5">Step 5 — Equipment Photos (Optional)</div>
+    <div class="img-upload-area" id="dropZone" onclick="document.getElementById('imgInput').click()">
+      <div class="img-upload-icon">📷</div>
+      <div class="img-upload-text" data-t="uploadText">Click to upload or drag & drop photos</div>
+      <div class="img-upload-sub" data-t="uploadSub">Maximum 10 photos · JPG, PNG</div>
+      <div class="img-count" id="imgCount"></div>
+    </div>
+    <input type="file" id="imgInput" multiple accept="image/*" style="display:none" onchange="handleImages(this.files)">
+    <div class="img-grid" id="imgGrid"></div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generatePDF()" id="pdfBtn">
+        <span>📄</span><span data-t="savePDF">Save PDF</span>
+      </button>
+      <button class="btn btn-share" onclick="sharePDF()" id="shareBtn">
+        <span>📤</span><span data-t="sharePDF">Share</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Translations ──────────────────────────────────────────
+const T = {
+  en:{
+    appTitle:'PMI System', appSub:'Preventive Maintenance Inspection',
+    step1:'Step 1 — Work Order', woLabel:'Work Order Number',
+    step2:'Step 2 — Equipment Code', step3:'Step 3 — Frequency',
+    step4:'Step 4 — Checklist', step5:'Step 5 — Equipment Photos (Optional)',
+    uploadText:'Click to upload or drag & drop photos', uploadSub:'Maximum 10 photos · JPG, PNG',
+    statTotal:'Total', statDone:'Completed', statLeft:'Remaining',
+    checkAll:'Check All', uncheckAll:'Uncheck All',
+    savePDF:'Save PDF', sharePDF:'Share',
+    noWO:'Please enter a Work Order number first.',
+    noCode:'Please select an equipment code first.',
+    noFreq:'Please select a frequency first.',
+    pdfReady:'PDF saved!', pdfError:'PDF generation failed.',
+    shareNotSupported:'Sharing not supported. PDF saved instead.',
+    maxPhotos:'Maximum 10 photos allowed.',
+    placeholder:'Type code or name (e.g. EL-01, Generator...)',
+    freqLabel: f=>f,
+  },
+  ar:{
+    appTitle:'نظام PMI', appSub:'خطط الصيانة الوقائية',
+    step1:'الخطوة 1 — رقم أمر العمل', woLabel:'رقم أمر العمل',
+    step2:'الخطوة 2 — كود المعدة', step3:'الخطوة 3 — التردد',
+    step4:'الخطوة 4 — قائمة التفتيش', step5:'الخطوة 5 — صور المعدة (اختياري)',
+    uploadText:'اضغط لرفع الصور أو اسحب وأفلت', uploadSub:'الحد الأقصى 10 صور',
+    statTotal:'الإجمالي', statDone:'مكتمل', statLeft:'متبقي',
+    checkAll:'تحديد الكل', uncheckAll:'إلغاء الكل',
+    savePDF:'حفظ PDF', sharePDF:'مشاركة',
+    noWO:'الرجاء إدخال رقم أمر العمل أولاً.',
+    noCode:'الرجاء اختيار كود المعدة أولاً.',
+    noFreq:'الرجاء اختيار التردد أولاً.',
+    pdfReady:'تم حفظ PDF!', pdfError:'فشل إنشاء PDF.',
+    shareNotSupported:'المشاركة غير مدعومة. تم حفظ PDF.',
+    maxPhotos:'الحد الأقصى 10 صور فقط.',
+    placeholder:'اكتب الكود أو الاسم (مثال: EL-01)',
+    freqLabel: f=>({'Daily':'يومي','Weekly':'أسبوعي','Monthly':'شهري','Quarterly':'ربع سنوي','Bi-Annually':'نصف سنوي','Bi-annually (or 200 hours)':'نصف سنوي (200 ساعة)','Annually':'سنوي','Annually (or 400 hours)':'سنوي (400 ساعة)','Two-weekly':'أسبوعي مرتان','Two-yearly':'كل سنتين','Two-yearly (or every 3000 hours)':'كل سنتين (3000 ساعة)','Every 2000 hours':'كل 2000 ساعة','Every 50 Hours or Weekly':'كل 50 ساعة','Every 250 Service Hours or 6 Weeks':'كل 250 ساعة','Every 500 Service Hours or 3 Months':'كل 500 ساعة','Every 1000 Service Hours or 6 Months':'كل 1000 ساعة','Every four years:':'كل 4 سنوات','As Required':'حسب الحاجة','General Instructions':'تعليمات عامة','Safety Precautions':'احتياطات السلامة','GENERAL CHECKING':'الفحص العام','Biweekly and upon Consultant Instructions':'أسبوعي مرتان'}[f]||f),
+  },
+  ur:{
+    appTitle:'PMI سسٹم', appSub:'احتیاطی دیکھ بھال',
+    step1:'مرحلہ 1 — ورک آرڈر', woLabel:'ورک آرڈر نمبر',
+    step2:'مرحلہ 2 — آلات کوڈ', step3:'مرحلہ 3 — تعدد',
+    step4:'مرحلہ 4 — معائنہ فہرست', step5:'مرحلہ 5 — تصاویر (اختیاری)',
+    uploadText:'تصاویر اپ لوڈ کریں', uploadSub:'زیادہ سے زیادہ 10 تصاویر',
+    statTotal:'کل', statDone:'مکمل', statLeft:'باقی',
+    checkAll:'سب چیک کریں', uncheckAll:'سب ہٹائیں',
+    savePDF:'PDF محفوظ', sharePDF:'شیئر',
+    noWO:'ورک آرڈر نمبر درج کریں۔',
+    noCode:'آلات کوڈ منتخب کریں۔',
+    noFreq:'تعدد منتخب کریں۔',
+    pdfReady:'PDF محفوظ ہو گیا!', pdfError:'PDF ناکام۔',
+    shareNotSupported:'شیئرنگ سپورٹ نہیں۔ PDF محفوظ ہو گیا۔',
+    maxPhotos:'زیادہ سے زیادہ 10 تصاویر۔',
+    placeholder:'کوڈ یا نام لکھیں (مثلاً EL-01)',
+    freqLabel: f=>f,
+  }
+};
+
+// ── State ─────────────────────────────────────────────────
+let lang='en', selectedCode=null, selectedFreq=null, checkedItems={}, uploadedImages=[];
+
+// ── Language ──────────────────────────────────────────────
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.classList.toggle('active',(l==='en'&&b.textContent==='EN')||(l==='ar'&&b.textContent==='ع')||(l==='ur'&&b.textContent==='اردو'));
+  });
+  const rtl=l==='ar'||l==='ur';
+  document.body.setAttribute('dir',rtl?'rtl':'ltr');
+  document.body.setAttribute('lang',l);
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const k=el.getAttribute('data-t');
+    if(T[l][k]!==undefined) el.textContent=T[l][k];
+  });
+  document.getElementById('codeSearch').placeholder=T[l].placeholder;
+  if(selectedCode) renderFreqs();
+  if(selectedFreq) renderChecklist();
+}
+function t(k){ return T[lang][k]||T.en[k]||k; }
+
+// ── Search ────────────────────────────────────────────────
+const allCodes=Object.keys(PMI).sort();
+
+document.getElementById('codeSearch').addEventListener('input',function(){
+  const q=this.value.trim().toUpperCase();
+  if(!q){hideDropdown();return;}
+  const matches=allCodes.filter(c=>c.includes(q)||PMI[c].name.toUpperCase().includes(q)).slice(0,20);
+  showDropdown(matches);
+});
+document.getElementById('codeSearch').addEventListener('keydown',e=>{if(e.key==='Escape')hideDropdown();});
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrapper'))hideDropdown();});
+
+function showDropdown(codes){
+  const dd=document.getElementById('dropdown');
+  if(!codes.length){hideDropdown();return;}
+  dd.innerHTML=codes.map(c=>`<div class="dropdown-item" onclick="selectCode('${c}')"><span class="item-code">${c}</span><span class="item-name">${PMI[c].name}</span></div>`).join('');
+  dd.classList.remove('hidden');
+}
+function hideDropdown(){document.getElementById('dropdown').classList.add('hidden');}
+
+function selectCode(code){
+  selectedCode=code; selectedFreq=null; checkedItems={};
+  hideDropdown();
+  document.getElementById('codeSearch').value='';
+  document.getElementById('badgeCode').textContent=code;
+  document.getElementById('badgeName').textContent=PMI[code].name;
+  document.getElementById('eqBadge').classList.remove('hidden');
+  renderFreqs();
+  document.getElementById('freqCard').classList.remove('hidden');
+  document.getElementById('checklistCard').classList.add('hidden');
+  document.getElementById('photoCard').classList.add('hidden');
+}
+function clearSelection(){
+  selectedCode=null;selectedFreq=null;checkedItems={};
+  document.getElementById('eqBadge').classList.add('hidden');
+  document.getElementById('freqCard').classList.add('hidden');
+  document.getElementById('checklistCard').classList.add('hidden');
+  document.getElementById('photoCard').classList.add('hidden');
+  document.getElementById('codeSearch').value='';
+  document.getElementById('codeSearch').focus();
+}
+
+// ── Frequency ─────────────────────────────────────────────
+function renderFreqs(){
+  if(!selectedCode)return;
+  document.getElementById('freqGrid').innerHTML=Object.keys(PMI[selectedCode].frequencies).map(f=>
+    `<button class="freq-btn ${f===selectedFreq?'active':''}" onclick="selectFreq('${f.replace(/'/g,"\\'")}')">${T[lang].freqLabel(f)}</button>`
+  ).join('');
+}
+function selectFreq(freq){
+  selectedFreq=freq; checkedItems={};
+  renderFreqs(); renderChecklist();
+  document.getElementById('checklistCard').classList.remove('hidden');
+  document.getElementById('photoCard').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('checklistCard').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// ── Checklist ─────────────────────────────────────────────
+function renderChecklist(){
+  if(!selectedCode||!selectedFreq)return;
+  const tasks=PMI[selectedCode].frequencies[selectedFreq]||[];
+  document.getElementById('checklistTitle').textContent=`${selectedCode} — ${PMI[selectedCode].name}`;
+  document.getElementById('checklistMeta').textContent=T[lang].freqLabel(selectedFreq);
+  document.getElementById('taskList').innerHTML=tasks.map((task,i)=>
+    `<div class="task-item ${checkedItems[i]?'checked':''}" onclick="toggleTask(${i})" id="task-${i}">
+      <div class="task-checkbox"></div>
+      <span class="task-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="task-text">${task.replace(/\n/g,' ').trim()}</span>
+    </div>`
+  ).join('');
+  updateStats(tasks.length);
+}
+function toggleTask(i){
+  checkedItems[i]=!checkedItems[i];
+  document.getElementById(`task-${i}`).classList.toggle('checked',checkedItems[i]);
+  updateStats(PMI[selectedCode].frequencies[selectedFreq].length);
+}
+function toggleAll(){
+  const tasks=PMI[selectedCode].frequencies[selectedFreq]||[];
+  const allChecked=Object.values(checkedItems).filter(Boolean).length===tasks.length;
+  tasks.forEach((_,i)=>{checkedItems[i]=!allChecked;});
+  renderChecklist();
+  document.getElementById('toggleAllBtn').textContent=allChecked?t('checkAll'):t('uncheckAll');
+}
+function updateStats(total){
+  const done=Object.values(checkedItems).filter(Boolean).length;
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statDone').textContent=done;
+  document.getElementById('statLeft').textContent=total-done;
+  document.getElementById('progressBar').style.width=total?`${(done/total)*100}%`:'0%';
+}
+
+// ── Images ────────────────────────────────────────────────
+function compressImage(dataUrl, maxW, quality, cb){
+  const img=new Image();
+  img.onload=function(){
+    const scale=Math.min(1, maxW/img.width);
+    const w=Math.round(img.width*scale);
+    const h=Math.round(img.height*scale);
+    const canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    cb(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src=dataUrl;
+}
+
+function handleImages(files){
+  const rem=10-uploadedImages.length;
+  if(rem<=0){showToast(t('maxPhotos'),'error');return;}
+  Array.from(files).slice(0,rem).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      // Compress: max 900px wide, quality 0.65
+      compressImage(e.target.result, 900, 0.65, compressed=>{
+        uploadedImages.push(compressed);
+        renderImages();
+      });
+    };
+    r.readAsDataURL(file);
+  });
+  if(files.length>rem)showToast(t('maxPhotos'),'error');
+}
+function renderImages(){
+  document.getElementById('imgCount').textContent=uploadedImages.length?`${uploadedImages.length}/10`:'';
+  document.getElementById('imgGrid').innerHTML=uploadedImages.map((src,i)=>
+    `<div class="img-thumb"><img src="${src}" alt="Photo ${i+1}"><button class="img-thumb-del" onclick="removeImage(${i})">✕</button></div>`
+  ).join('');
+}
+function removeImage(i){uploadedImages.splice(i,1);renderImages();}
+
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');handleImages(e.dataTransfer.files);});
+
+// ── PDF Builder ───────────────────────────────────────────
+function buildPDF(wo){
+  const {jsPDF}=window.jspdf;
+  // Portrait A4
+  const doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  const W=210,H=297,M=14,CW=W-M*2;
+
+  // Palette (light theme for print)
+  const NAVY =[15, 50, 90];
+  const BLUE =[10,126,164];
+  const TEAL =[0,168,140];
+  const LGRAY=[240,244,248];
+  const MID  =[100,116,139];
+  const DARK =[26, 33, 48];
+  const GREEN=[15,158,106];
+  const WHITE=[255,255,255];
+
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const timeStr=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  // ── Top header bar ──
+  doc.setFillColor(...NAVY); doc.rect(0,0,W,36,'F');
+  // accent line
+  doc.setFillColor(...TEAL); doc.rect(0,34,W,3,'F');
+
+  // Logo area
+  doc.setFillColor(...BLUE); doc.roundedRect(M,7,22,22,3,3,'F');
+  doc.setTextColor(...WHITE); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('PMI',M+11,21,{align:'center'});
+
+  // Title
+  doc.setTextColor(...WHITE); doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Preventive Maintenance Inspection', M+26, 16);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.setTextColor(180,210,230);
+  doc.text('Work Order Report', M+26, 23);
+
+  // Date/time top right
+  doc.setTextColor(180,210,230); doc.setFontSize(8);
+  doc.text(`${dateStr}  ${timeStr}`, W-M, 14, {align:'right'});
+  doc.text('Generated automatically by PMI System', W-M, 20, {align:'right'});
+
+  // ── Info row ──
+  let y=44;
+  // WO box
+  doc.setFillColor(...LGRAY); doc.roundedRect(M,y,58,20,3,3,'F');
+  doc.setDrawColor(...BLUE); doc.roundedRect(M,y,58,20,3,3,'D');
+  doc.setTextColor(...BLUE); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('WORK ORDER', M+4, y+6);
+  doc.setTextColor(...DARK); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(wo, M+4, y+14);
+
+  // Code box
+  doc.setFillColor(...LGRAY); doc.roundedRect(M+62,y,42,20,3,3,'F');
+  doc.setDrawColor(...BLUE); doc.roundedRect(M+62,y,42,20,3,3,'D');
+  doc.setTextColor(...BLUE); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('EQUIPMENT CODE', M+66, y+6);
+  doc.setTextColor(...DARK); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(selectedCode, M+66, y+14);
+
+  // Frequency box
+  doc.setFillColor(...BLUE); doc.roundedRect(M+108,y,CW-108,20,3,3,'F');
+  doc.setTextColor(...WHITE); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('FREQUENCY', M+112, y+6);
+  doc.setFontSize(10); doc.setFont('helvetica','bold');
+  const freqShort=selectedFreq.length>28?selectedFreq.substring(0,26)+'…':selectedFreq;
+  doc.text(freqShort, M+112, y+14);
+
+  // Equipment name full row
+  y+=26;
+  doc.setFillColor(...DARK); doc.roundedRect(M,y,CW,14,3,3,'F');
+  doc.setTextColor(180,210,230); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('EQUIPMENT NAME', M+4, y+5);
+  doc.setTextColor(...WHITE); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  const nameLines=doc.splitTextToSize(PMI[selectedCode].name, CW-10);
+  doc.text(nameLines[0], M+4, y+11);
+
+  // ── Progress summary ──
+  y+=20;
+  const tasks=PMI[selectedCode].frequencies[selectedFreq]||[];
+  const done=Object.values(checkedItems).filter(Boolean).length;
+  const pct=tasks.length?Math.round((done/tasks.length)*100):0;
+
+  // progress bar
+  doc.setFillColor(...LGRAY); doc.roundedRect(M,y,CW,7,2,2,'F');
+  if(tasks.length){
+    doc.setFillColor(...GREEN); doc.roundedRect(M,y,CW*(done/tasks.length),7,2,2,'F');
+  }
+  doc.setTextColor(...MID); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text(`${done} / ${tasks.length} tasks completed  (${pct}%)`, M+2, y+5);
+
+  // ── Checklist section title ──
+  y+=13;
+  doc.setFillColor(...LGRAY); doc.rect(M,y,CW,8,'F');
+  doc.setFillColor(...BLUE); doc.rect(M,y,3,8,'F');
+  doc.setTextColor(...BLUE); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('CHECKLIST ITEMS', M+6, y+5.5);
+  doc.setTextColor(...MID); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.text(`${tasks.length} items`, W-M, y+5.5, {align:'right'});
+  y+=12;
+
+  // ── Task rows ──
+  for(let i=0;i<tasks.length;i++){
+    const rowH=10;
+    if(y+rowH>H-18){
+      // footer before new page
+      addFooter(doc,W,H,M,wo,MID);
+      doc.addPage(); y=20;
+      // repeat section header
+      doc.setFillColor(...LGRAY); doc.rect(M,y,CW,7,'F');
+      doc.setFillColor(...BLUE); doc.rect(M,y,3,7,'F');
+      doc.setTextColor(...BLUE); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text('CHECKLIST ITEMS (continued)', M+6, y+5);
+      y+=11;
+    }
+
+    const checked=!!checkedItems[i];
+    // row bg
+    if(i%2===0){doc.setFillColor(249,251,253);doc.rect(M,y,CW,rowH,'F');}
+    // sequential number (left)
+    doc.setTextColor(100,116,139); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(String(i+1).padStart(2,'0'), M+2, y+7);
+    // task text (middle) - no strikethrough
+    const txt=tasks[i].replace(/\n/g,' ').trim();
+    const shortTxt=txt.length>95?txt.substring(0,95)+'…':txt;
+    doc.setTextColor(26,33,48); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(shortTxt, M+10, y+7);
+    // checkbox (right) - green check or red X
+    if(checked){
+      doc.setFillColor(15,158,106);
+      doc.roundedRect(W-M-8,y+2,6,6,1,1,'F');
+      doc.setTextColor(255,255,255); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text('✓', W-M-5.2, y+7);
+    } else {
+      doc.setFillColor(220,53,53);
+      doc.roundedRect(W-M-8,y+2,6,6,1,1,'F');
+      doc.setTextColor(255,255,255); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text('X', W-M-5.5, y+7);
+    }
+    y+=rowH;
+  }
+
+  // ── Photos ──
+  if(uploadedImages.length>0){
+    if(y>H-60){addFooter(doc,W,H,M,wo,MID);doc.addPage();y=20;}
+    else y+=8;
+
+    doc.setFillColor(...LGRAY); doc.rect(M,y,CW,8,'F');
+    doc.setFillColor(...TEAL); doc.rect(M,y,3,8,'F');
+    doc.setTextColor(...TEAL); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('EQUIPMENT PHOTOS', M+6, y+5.5);
+    doc.setTextColor(...MID); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text(`${uploadedImages.length} photo(s)`, W-M, y+5.5, {align:'right'});
+    y+=13;
+
+    const cols=3, imgW=(CW-8)/cols, imgH=imgW*0.72;
+    let col=0;
+    for(const imgData of uploadedImages){
+      if(col===cols){col=0;y+=imgH+4;}
+      if(y+imgH>H-18){addFooter(doc,W,H,M,wo,MID);doc.addPage();y=20;col=0;}
+      const x=M+col*(imgW+4);
+      try{
+        doc.addImage(imgData,'JPEG',x,y,imgW,imgH,undefined,'MEDIUM');
+        doc.setDrawColor(...TEAL); doc.setLineWidth(0.4);
+        doc.roundedRect(x,y,imgW,imgH,2,2,'D');
+      }catch(e){}
+      col++;
+    }
+    y+=imgH+4;
+  }
+
+  // ── Signature row ──
+  if(y>H-35){addFooter(doc,W,H,M,wo,MID);doc.addPage();y=20;}
+  else y+=10;
+
+  doc.setFillColor(...LGRAY); doc.roundedRect(M,y,CW,22,3,3,'F');
+  doc.setTextColor(...MID); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('TECHNICIAN SIGNATURE', M+6, y+7);
+  doc.text('SUPERVISOR SIGNATURE', M+CW/2+6, y+7);
+  doc.setDrawColor(...MID); doc.setLineWidth(0.3);
+  doc.line(M+6, y+18, M+CW/2-6, y+18);
+  doc.line(M+CW/2+6, y+18, M+CW-6, y+18);
+  doc.line(M+CW/2, y+4, M+CW/2, y+20);
+
+  // Footer on last page
+  addFooter(doc,W,H,M,wo,MID);
+  return doc;
+}
+
+function addFooter(doc,W,H,M,wo,MID){
+  doc.setFillColor(15,50,90); doc.rect(0,H-12,W,12,'F');
+  doc.setTextColor(180,210,230); doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text(`PMI System  ·  WO: ${wo}  ·  ${selectedCode}  ·  ${selectedFreq}`, M, H-5);
+  const now=new Date();
+  doc.text(`${now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}  ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`, W-M, H-5, {align:'right'});
+}
+
+async function generatePDF(){
+  const wo=document.getElementById('woInput').value.trim();
+  if(!wo){showToast(t('noWO'),'error');return;}
+  if(!selectedCode){showToast(t('noCode'),'error');return;}
+  if(!selectedFreq){showToast(t('noFreq'),'error');return;}
+  const btn=document.getElementById('pdfBtn');
+  btn.disabled=true; btn.innerHTML='<span>⏳</span><span>Generating...</span>';
+  await new Promise(r=>setTimeout(r,60));
+  try{
+    const doc=buildPDF(wo);
+    doc.save(`${wo}_${selectedCode}.pdf`);
+    showToast('✅ '+t('pdfReady'));
+  }catch(e){console.error('PDF error:',e);showToast(t('pdfError'),'error');}
+  finally{btn.disabled=false;btn.innerHTML=`<span>📄</span><span>${t('savePDF')}</span>`;}
+}
+
+async function sharePDF(){
+  const wo=document.getElementById('woInput').value.trim();
+  if(!wo){showToast(t('noWO'),'error');return;}
+  if(!selectedCode){showToast(t('noCode'),'error');return;}
+  if(!selectedFreq){showToast(t('noFreq'),'error');return;}
+  try{
+    const doc=buildPDF(wo);
+    const filename=`${wo}_${selectedCode}.pdf`;
+    const blob=doc.output('blob');
+    const file=new File([blob],filename,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:`PMI - ${wo}`,text:`PMI Report: ${selectedCode} | WO: ${wo}`});
+    } else {
+      doc.save(filename);
+      showToast(t('shareNotSupported'));
+    }
+  }catch(e){if(e.name!=='AbortError'){showToast(t('pdfError'),'error');}}
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=`toast ${type} show`;
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+setLang('en');
+</script>
+</body>
+</html>
